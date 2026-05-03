@@ -3,11 +3,22 @@ import { useEffect, useState } from 'react'
 interface QuickValidateButtonProps {
   onConfirm: () => Promise<void> | void
   disabled?: boolean
+  idleLabel?: string
+  armedLabel?: string
+  idleClassName?: string
+  armedClassName?: string
 }
 
 const CONFIRM_WINDOW_MS = 3500
 
-export function QuickValidateButton({ onConfirm, disabled = false }: QuickValidateButtonProps) {
+export function QuickValidateButton({
+  onConfirm,
+  disabled = false,
+  idleLabel = 'Valider',
+  armedLabel = 'Recliquez pour confirmer',
+  idleClassName = 'primary compact',
+  armedClassName = 'validate-confirm compact',
+}: QuickValidateButtonProps) {
   const [armedAt, setArmedAt] = useState<number | null>(null)
 
   useEffect(() => {
@@ -41,8 +52,8 @@ export function QuickValidateButton({ onConfirm, disabled = false }: QuickValida
   }
 
   return (
-    <button type="button" className={isArmed ? 'ghost compact' : 'primary compact'} onClick={handleClick} disabled={disabled}>
-      {isArmed ? 'Confirmer validation' : 'Valider'}
+    <button type="button" className={isArmed ? armedClassName : idleClassName} onClick={handleClick} disabled={disabled}>
+      {isArmed ? armedLabel : idleLabel}
     </button>
   )
 }

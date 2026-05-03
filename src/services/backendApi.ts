@@ -127,6 +127,12 @@ export async function createValidation(taskId: string, note: string | null) {
   return normalizeValidation(raw)
 }
 
+export async function deleteValidation(taskId: string, validationId: string) {
+  await requestJson<void>(`/api/v1/tasks/${taskId}/validations/${validationId}`, {
+    method: 'DELETE',
+  })
+}
+
 export async function listTaskAssignees(taskId: string) {
   const raw = await requestJson<ApiUser[]>(`/api/v1/tasks/${taskId}/assignees`)
   return raw.map((user) => normalizeUser(user))
@@ -141,4 +147,10 @@ export async function assignTaskByEmail(taskId: string, email: string) {
     body: JSON.stringify({ user_emails: [email] }),
   })
   return raw.map((user) => normalizeUser(user))
+}
+
+export async function unassignTaskUser(taskId: string, userId: string) {
+  await requestJson<void>(`/api/v1/tasks/${taskId}/assignees/${userId}`, {
+    method: 'DELETE',
+  })
 }

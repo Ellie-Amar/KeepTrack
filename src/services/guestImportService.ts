@@ -1,6 +1,7 @@
 import { db } from './db'
 import { enqueueSyncJob, hasGuestData } from './taskStore'
 import { getGuestScope } from '../auth/sessionStore'
+import { generateUuid } from '../utils/uuid'
 import type { ImportGuestResult, LocalTask, LocalValidation } from '../types'
 
 function nowIso() {
@@ -39,7 +40,7 @@ export async function importGuestDataToScope(targetScope: string): Promise<Impor
     for (const task of guestTasks) {
       const importedTask: LocalTask = {
         ...task,
-        id: crypto.randomUUID(),
+        id: generateUuid(),
         scope: targetScope,
         remoteId: undefined,
         ownerId: undefined,
@@ -61,7 +62,7 @@ export async function importGuestDataToScope(targetScope: string): Promise<Impor
 
       const importedValidation: LocalValidation = {
         ...validation,
-        id: crypto.randomUUID(),
+        id: generateUuid(),
         scope: targetScope,
         taskId: mappedTaskId,
         remoteId: undefined,

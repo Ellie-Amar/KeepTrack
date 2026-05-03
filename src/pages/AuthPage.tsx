@@ -52,7 +52,7 @@ export function AuthPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!email.trim() || !password.trim()) {
-      setError('Email et mot de passe requis.')
+      setError('Courriel et mot de passe requis.')
       return
     }
     setAuthFlowActive(true)
@@ -89,7 +89,7 @@ export function AuthPage() {
 
       <form className="stack gap-12" onSubmit={handleSubmit}>
         <label className="stack gap-6">
-          <span>Email</span>
+          <span>Courriel</span>
           <input value={email} type="email" autoComplete="email" onChange={(event) => setEmail(event.target.value)} />
         </label>
 

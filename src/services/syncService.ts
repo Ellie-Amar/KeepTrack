@@ -1,5 +1,6 @@
 import { createTask, createValidation, listTasks, updateTask } from './backendApi'
 import { db } from './db'
+import { generateUuid } from '../utils/uuid'
 import {
   deleteJob,
   getQueuedJobs,
@@ -25,7 +26,7 @@ function toLocalTask(scope: string, remote: ApiTask, existing?: LocalTask): Loca
   }
 
   return {
-    id: existing?.id ?? crypto.randomUUID(),
+    id: existing?.id ?? generateUuid(),
     scope,
     remoteId: remote.id,
     ownerId: remote.owner_id,
@@ -76,7 +77,7 @@ async function syncValidation(validation: LocalValidation) {
 
   const parentTask = await db.tasks.get(validation.taskId)
   if (!parentTask || !parentTask.remoteId) {
-    throw new Error('Task distante manquante pour la validation')
+    throw new Error('Tâche distante manquante pour la validation')
   }
 
   const remoteValidation = await createValidation(parentTask.remoteId, validation.note)
@@ -162,7 +163,7 @@ export async function pullRemoteSnapshot(scope: string) {
           .first()
 
         const nextValidation: LocalValidation = {
-          id: existingValidation?.id ?? crypto.randomUUID(),
+          id: existingValidation?.id ?? generateUuid(),
           scope,
           taskId: localTask.id,
           remoteId: remoteValidation.id,

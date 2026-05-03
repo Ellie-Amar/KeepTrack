@@ -1,4 +1,5 @@
 import { db } from './db'
+import { generateUuid } from '../utils/uuid'
 import type {
   LocalTask,
   LocalValidation,
@@ -15,7 +16,7 @@ function nowIso() {
 }
 
 function createId() {
-  return crypto.randomUUID()
+  return generateUuid()
 }
 
 function isServerScope(scope: string) {
@@ -87,7 +88,7 @@ export async function createTaskLocal(scope: string, draft: TaskDraft) {
 export async function updateTaskLocal(scope: string, taskId: string, patch: Partial<TaskDraft>) {
   const current = await db.tasks.get(taskId)
   if (!current || current.scope !== scope || current.deleted) {
-    throw new Error('Task introuvable')
+    throw new Error('Tâche introuvable')
   }
 
   const next: LocalTask = {
@@ -119,7 +120,7 @@ export async function createValidationLocal(
 ) {
   const task = await db.tasks.get(taskId)
   if (!task || task.scope !== scope || task.deleted) {
-    throw new Error('Task introuvable')
+    throw new Error('Tâche introuvable')
   }
 
   const timestamp = nowIso()
@@ -147,6 +148,58 @@ export async function createValidationLocal(
   })
 
   if (isServerScope(scope)) {
+    await enqueueSyncJob(scope, 'validation_create', validation.id)
+  }
+
+  return validation
+}
+
+export async function getValidationLocal(scope: string, validationId: string) {
+  const validation = await db.validations.get(validationId)
+  if (!validation || validation.scope !== scope || validation.deleted) {
+    return null
+  }
+  return validation
+}
+
+export async function removeValidationLocal(scope: string, validationId: string) {
+  const validation = await getValidationLocal(scope, validationId)
+  if (!validation) {
+    return null
+  }
+
+  await db.transaction('rw', db.validations, db.syncJobs, async () => {
+    await db.validations.delete(validationId)
+
+    const pendingJobs = await db.syncJobs
+      .where('scope')
+      .equals(scope)
+      .and((job) => job.type === 'validation_create' && job.entityId === validationId && job.status !== 'processing')
+      .toArray()
+
+    if (pendingJobs.length > 0) {
+      await db.syncJobs.bulkDelete(
+        pendingJobs
+          .map((job) => job.id)
+          .filter((jobId): jobId is number => typeof jobId === 'number'),
+      )
+    }
+  })
+
+  return validation
+}
+
+export async function restoreValidationLocal(scope: string, validation: LocalValidation) {
+  if (validation.scope !== scope) {
+    throw new Error('Validation introuvable')
+  }
+
+  await db.validations.put({
+    ...validation,
+    deleted: false,
+  })
+
+  if (isServerScope(scope) && !validation.remoteId && validation.pendingSync) {
     await enqueueSyncJob(scope, 'validation_create', validation.id)
   }
 
