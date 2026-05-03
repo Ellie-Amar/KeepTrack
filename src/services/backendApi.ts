@@ -1,4 +1,5 @@
 import type { ApiTask, ApiUser, ApiValidation, AuthTokens, TaskStatus } from '../types'
+import { normalizeTaskStatus } from '../utils/taskStatus'
 
 import { requestJson } from './apiClient'
 
@@ -54,7 +55,7 @@ function normalizeTask(task: ApiTask): ApiTask {
     label: task.label,
     note: task.note ?? null,
     category: task.category ?? null,
-    status: task.status,
+    status: normalizeTaskStatus(task.status),
     order: task.order ?? 0,
     created_at: task.created_at ?? task.createdAt,
     updated_at: task.updated_at ?? task.updatedAt,

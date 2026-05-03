@@ -123,7 +123,6 @@ export function TaskDetailPage() {
     session?.mode === 'authenticated' &&
       online &&
       view?.task.remoteId &&
-      view.task.status !== 'archived' &&
       (view.task.ownerId ? view.task.ownerId === session.userId : true),
   )
 
@@ -374,7 +373,6 @@ export function TaskDetailPage() {
               <option value="active">{getTaskStatusLabel('active')}</option>
               <option value="suspended">{getTaskStatusLabel('suspended')}</option>
               <option value="done">{getTaskStatusLabel('done')}</option>
-              <option value="archived">{getTaskStatusLabel('archived')}</option>
             </select>
           </label>
 

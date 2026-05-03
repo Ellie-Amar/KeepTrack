@@ -343,6 +343,41 @@ button:disabled {
 .auth-card {
   width: min(440px, 100%);
   margin: 6vh auto;
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-head {
+  text-align: center;
+}
+
+.auth-title {
+  font-size: clamp(1.9rem, 3.4vw, 2.25rem);
+  line-height: 1.05;
+}
+
+.auth-subtitle {
+  font-size: 1rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.auth-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+}
+
+.auth-actions button {
+  width: 100%;
+}
+
+.auth-inline-action {
+  justify-self: center;
+}
+
+.auth-secondary-actions {
+  justify-content: center;
 }
 
 .stack {
@@ -485,10 +520,6 @@ button:disabled {
 
 .task-status-suspended {
   color: var(--accent-strong);
-}
-
-.task-status-archived {
-  color: var(--muted);
 }
 
 .task-status-done {
@@ -931,5 +962,13 @@ button:disabled {
 
   .toast-controls {
     gap: 0.42rem;
+  }
+
+  .auth-card {
+    margin: 2.2vh auto;
+  }
+
+  .auth-actions {
+    grid-template-columns: 1fr;
   }
 }

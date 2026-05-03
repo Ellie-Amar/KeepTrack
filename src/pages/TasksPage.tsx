@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Link, useNavigate } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { QuickValidateButton } from '../components/QuickValidateButton'
 import { ToastMessage } from '../components/ToastMessage'
@@ -11,15 +11,49 @@ import { deleteValidation, listTaskAssignees } from '../services/backendApi'
 import { getTaskViews, createValidationLocal, getValidationLocal, removeValidationLocal } from '../services/taskStore'
 import type { TaskStatus } from '../types'
 import { getTaskStatusLabel } from '../utils/taskStatusLabel'
+import { KNOWN_TASK_STATUSES } from '../utils/taskStatus'
 
 const TOAST_DURATION_MS = 5000
 const TOAST_UNDO_DURATION_MS = 3000
+const STATUS_FILTER_STORAGE_KEY_PREFIX = 'keeptrack.statusFilters'
 const STATUS_FILTER_TAGS: Array<{ status: TaskStatus; label: string }> = [
   { status: 'active', label: 'Actives' },
   { status: 'suspended', label: 'Suspendues' },
   { status: 'done', label: 'Terminées' },
-  { status: 'archived', label: 'Archivées' },
 ]
+const DEFAULT_ENABLED_STATUSES: TaskStatus[] = ['active', 'suspended']
+
+function getStorageKey(scope: string): string {
+  return `${STATUS_FILTER_STORAGE_KEY_PREFIX}.${scope}`
+}
+
+function normalizeStatusFilters(value: unknown): TaskStatus[] {
+  if (!Array.isArray(value)) {
+    return DEFAULT_ENABLED_STATUSES
+  }
+
+  const allowed = new Set<string>(KNOWN_TASK_STATUSES)
+  const deduped = value.filter((item): item is TaskStatus => typeof item === 'string' && allowed.has(item))
+  return Array.from(new Set(deduped))
+}
+
+function readStoredStatusFilters(scope: string): TaskStatus[] {
+  if (typeof window === 'undefined') {
+    return DEFAULT_ENABLED_STATUSES
+  }
+
+  try {
+    const raw = window.localStorage.getItem(getStorageKey(scope))
+    if (!raw) {
+      return DEFAULT_ENABLED_STATUSES
+    }
+
+    const parsed = JSON.parse(raw) as unknown
+    return normalizeStatusFilters(parsed)
+  } catch {
+    return DEFAULT_ENABLED_STATUSES
+  }
+}
 
 function getTaskStatusClassName(status: string): string {
   switch (status) {
@@ -27,8 +61,6 @@ function getTaskStatusClassName(status: string): string {
       return 'task-status-active'
     case 'suspended':
       return 'task-status-suspended'
-    case 'archived':
-      return 'task-status-archived'
     case 'done':
       return 'task-status-done'
     default:
@@ -47,13 +79,27 @@ function getValidationAuthorName(userDisplayName: string | null, userId: string 
 export function TasksPage() {
   const { session } = useAuth()
   const navigate = useNavigate()
-  const [enabledStatuses, setEnabledStatuses] = useState<TaskStatus[]>(() =>
-    STATUS_FILTER_TAGS.map((tag) => tag.status),
-  )
+  const [enabledStatuses, setEnabledStatuses] = useState<TaskStatus[]>(DEFAULT_ENABLED_STATUSES)
   const [toast, setToast] = useState<ToastState | null>(null)
+  const hydratedScopeRef = useRef<string | null>(null)
 
   const scope = session?.scope
   const views = useLiveQuery(async () => (scope ? getTaskViews(scope) : []), [scope], [])
+
+  useEffect(() => {
+    if (!scope || typeof window === 'undefined') {
+      hydratedScopeRef.current = null
+      return
+    }
+
+    if (hydratedScopeRef.current !== scope) {
+      hydratedScopeRef.current = scope
+      setEnabledStatuses(readStoredStatusFilters(scope))
+      return
+    }
+
+    window.localStorage.setItem(getStorageKey(scope), JSON.stringify(enabledStatuses))
+  }, [enabledStatuses, scope])
 
   useEffect(() => {
     if (!toast) {

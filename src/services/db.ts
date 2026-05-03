@@ -17,6 +17,25 @@ class KeepTrackDb extends Dexie {
         'id, scope, taskId, remoteId, remoteTaskId, updatedAt, deleted, pendingSync, [scope+taskId], [scope+remoteId]',
       syncJobs: '++id, scope, type, entityId, status, updatedAt, [scope+status], [scope+updatedAt]',
     })
+
+    this.version(2)
+      .stores({
+        tasks:
+          'id, scope, remoteId, updatedAt, deleted, pendingSync, [scope+updatedAt], [scope+remoteId]',
+        validations:
+          'id, scope, taskId, remoteId, remoteTaskId, updatedAt, deleted, pendingSync, [scope+taskId], [scope+remoteId]',
+        syncJobs: '++id, scope, type, entityId, status, updatedAt, [scope+status], [scope+updatedAt]',
+      })
+      .upgrade((tx) =>
+        tx
+          .table('tasks')
+          .toCollection()
+          .modify((task) => {
+            if (task.status === 'archived') {
+              task.status = 'done'
+            }
+          }),
+      )
   }
 }
 

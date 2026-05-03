@@ -20,6 +20,47 @@ function toHeaders(headers?: HeadersInit): Headers {
   return new Headers(headers)
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function extractErrorMessage(payload: unknown): string | null {
+  if (typeof payload === 'string') {
+    const trimmed = payload.trim()
+    return trimmed ? trimmed : null
+  }
+
+  if (Array.isArray(payload)) {
+    const messages = payload
+      .map((item) => extractErrorMessage(item))
+      .filter((message): message is string => Boolean(message))
+    return messages.length ? messages.join('. ') : null
+  }
+
+  if (!isRecord(payload)) {
+    return null
+  }
+
+  const msg = payload.msg
+  if (typeof msg === 'string' && msg.trim()) {
+    return msg.trim()
+  }
+
+  const message = payload.message
+  if (typeof message === 'string' && message.trim()) {
+    return message.trim()
+  }
+
+  const detail = payload.detail
+  const detailMessage = extractErrorMessage(detail)
+  if (detailMessage) {
+    return detailMessage
+  }
+
+  const error = payload.error
+  return extractErrorMessage(error)
+}
+
 async function parseError(response: Response) {
   const text = await response.text()
   if (!text) {
@@ -27,8 +68,8 @@ async function parseError(response: Response) {
   }
 
   try {
-    const parsed = JSON.parse(text) as { detail?: string }
-    return parsed.detail || text
+    const parsed = JSON.parse(text) as unknown
+    return extractErrorMessage(parsed) || text
   } catch {
     return text
   }

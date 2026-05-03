@@ -52,7 +52,11 @@ export function AuthPage() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!email.trim() || !password.trim()) {
-      setError('Courriel et mot de passe requis.')
+      setError('Email et mot de passe requis.')
+      return
+    }
+    if (mode === 'signup' && password.length < 8) {
+      setError('Mot de passe trop court (8 caractères minimum).')
       return
     }
     setAuthFlowActive(true)
@@ -82,14 +86,14 @@ export function AuthPage() {
 
   return (
     <div className="auth-card card reveal">
-      <div className="stack gap-8">
-        <h1>KeepTrack</h1>
-        <p>{mode === 'login' ? 'Connexion' : 'Inscription'}</p>
+      <div className="auth-head stack gap-8">
+        <h1 className="auth-title">KeepTrack</h1>
+        <p className="auth-subtitle">{mode === 'login' ? 'Connexion' : 'Inscription'}</p>
       </div>
 
       <form className="stack gap-12" onSubmit={handleSubmit}>
         <label className="stack gap-6">
-          <span>Courriel</span>
+          <span>Email</span>
           <input value={email} type="email" autoComplete="email" onChange={(event) => setEmail(event.target.value)} />
         </label>
 
@@ -117,7 +121,7 @@ export function AuthPage() {
 
         {error && <p className="error">{error}</p>}
 
-        <div className="row gap-8">
+        <div className="auth-actions row gap-8">
           <button className="primary" type="submit" disabled={authMutation.isPending}>
             {authMutation.isPending ? 'Connexion...' : mode === 'login' ? 'Se connecter' : "S'inscrire"}
           </button>
@@ -131,13 +135,13 @@ export function AuthPage() {
           </button>
         </div>
         {session && (
-          <button className="ghost compact" type="button" onClick={() => navigate('/tasks')}>
+          <button className="ghost compact auth-inline-action" type="button" onClick={() => navigate('/tasks')}>
             Continuer vers les tâches
           </button>
         )}
       </form>
 
-      <div className="row">
+      <div className="auth-secondary-actions row">
         <button className="ghost" type="button" onClick={handleGuest}>
           Continuer en invité
         </button>

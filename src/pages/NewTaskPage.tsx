@@ -76,7 +76,6 @@ export function NewTaskPage() {
             <option value="active">{getTaskStatusLabel('active')}</option>
             <option value="suspended">{getTaskStatusLabel('suspended')}</option>
             <option value="done">{getTaskStatusLabel('done')}</option>
-            <option value="archived">{getTaskStatusLabel('archived')}</option>
           </select>
         </label>
         <div className="row end">

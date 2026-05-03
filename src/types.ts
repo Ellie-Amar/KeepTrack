@@ -1,4 +1,4 @@
-export type TaskStatus = 'active' | 'done' | 'suspended' | 'archived' | (string & {})
+export type TaskStatus = 'active' | 'done' | 'suspended' | (string & {})
 
 export interface AuthTokens {
   access_token: string
