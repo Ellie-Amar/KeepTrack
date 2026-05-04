@@ -22,6 +22,7 @@ const STATUS_FILTER_TAGS: Array<{ status: TaskStatus; label: string }> = [
   { status: 'done', label: 'Terminées' },
 ]
 const DEFAULT_ENABLED_STATUSES: TaskStatus[] = ['active', 'suspended']
+let nextToastId = 1
 
 function getStorageKey(scope: string): string {
   return `${STATUS_FILTER_STORAGE_KEY_PREFIX}.${scope}`
@@ -76,6 +77,12 @@ function getValidationAuthorName(userDisplayName: string | null, userId: string 
   return userDisplayName || userId || 'Utilisateur'
 }
 
+function createToastId() {
+  const id = nextToastId
+  nextToastId += 1
+  return id
+}
+
 export function TasksPage() {
   const { session } = useAuth()
   const navigate = useNavigate()
@@ -94,6 +101,7 @@ export function TasksPage() {
 
     if (hydratedScopeRef.current !== scope) {
       hydratedScopeRef.current = scope
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEnabledStatuses(readStoredStatusFilters(scope))
       return
     }
@@ -141,7 +149,7 @@ export function TasksPage() {
 
   const showToast = (message: string, action?: ToastAction, durationMs = TOAST_DURATION_MS) => {
     setToast({
-      id: Date.now(),
+      id: createToastId(),
       message,
       action,
       durationMs,

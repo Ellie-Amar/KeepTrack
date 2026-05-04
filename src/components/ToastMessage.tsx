@@ -87,7 +87,6 @@ export function ToastMessage({ toast, onAction }: ToastMessageProps) {
 
   useEffect(() => {
     if (!toast) {
-      setToastRing(null)
       return
     }
 

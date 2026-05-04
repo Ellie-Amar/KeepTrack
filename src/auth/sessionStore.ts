@@ -43,7 +43,20 @@ function parseSession(value: string | null): Session | null {
   }
 }
 
-let currentSession: Session | null = parseSession(localStorage.getItem(SESSION_KEY))
+function getStorage(): Storage | null {
+  if (typeof window !== 'undefined' && typeof window.localStorage?.getItem === 'function') {
+    return window.localStorage
+  }
+
+  const candidate = (globalThis as { localStorage?: Partial<Storage> }).localStorage
+  if (candidate && typeof candidate.getItem === 'function') {
+    return candidate as Storage
+  }
+
+  return null
+}
+
+let currentSession: Session | null = parseSession(getStorage()?.getItem(SESSION_KEY) ?? null)
 
 function emitSessionChange() {
   for (const listener of listeners) {
@@ -93,11 +106,17 @@ export function getSession() {
 
 export function setSession(session: Session | null) {
   currentSession = session
+  const storage = getStorage()
+
+  if (!storage) {
+    emitSessionChange()
+    return
+  }
 
   if (session) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    storage.setItem(SESSION_KEY, JSON.stringify(session))
   } else {
-    localStorage.removeItem(SESSION_KEY)
+    storage.removeItem(SESSION_KEY)
   }
 
   emitSessionChange()
@@ -118,7 +137,7 @@ export function updateSessionTokens(tokens: AuthTokens) {
     tokenType: tokens.token_type || tokens.tokenType || currentSession.tokenType,
   }
 
-  localStorage.setItem(SESSION_KEY, JSON.stringify(currentSession))
+  getStorage()?.setItem(SESSION_KEY, JSON.stringify(currentSession))
   emitSessionChange()
 }
 
